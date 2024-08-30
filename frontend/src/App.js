@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import axios from 'axios';
 
 function App() {
@@ -7,6 +7,8 @@ function App() {
     const [selectedColumns, setSelectedColumns] = useState([]);
     const [data, setData] = useState([]);
     const [shape, setShape] = useState(null);
+    const [normalizationMethod, setNormalizationMethod] = useState('minmax'); // Default normalization method
+    const [error, setError] = useState(null); // For displaying errors
 
     const handleFileChange = (e) => {
         setFile(e.target.files[0]);
@@ -25,7 +27,7 @@ function App() {
             setColumns(response.data.columns);
             setData(response.data.data);
             setShape(response.data.shape);
-            setSelectedColumns(response.data.columns);  // Initially select all columns
+            setSelectedColumns(response.data.columns); // Initially select all columns
         } catch (error) {
             console.error("There was an error uploading the file!", error);
         }
@@ -48,6 +50,26 @@ function App() {
             setData(response.data.data);
         } catch (error) {
             console.error("Error selecting features", error);
+        }
+    };
+
+    const handleNormalizationChange = (e) => {
+        setNormalizationMethod(e.target.value);
+    };
+
+    const handleNormalizeData = async () => {
+        try {
+            const response = await axios.post('http://127.0.0.1:5000/normalize', {
+                columns: selectedColumns,
+                data: data,
+                method: normalizationMethod
+            });
+            setColumns(response.data.columns);
+            setData(response.data.data);
+            setError(null); // Clear any previous error
+        } catch (error) {
+            console.error("Error normalizing data", error);
+            setError("Error normalizing data: " + (error.response?.data?.error || error.message));
         }
     };
 
@@ -74,6 +96,14 @@ function App() {
                         ))}
                     </div>
                     <button onClick={handleFeatureSelection}>Apply Feature Selection</button>
+
+                    <h2>Normalization/Standardization</h2>
+                    <select value={normalizationMethod} onChange={handleNormalizationChange}>
+                        <option value="minmax">Min-Max Normalization</option>
+                        <option value="standard">Standardization</option>
+                    </select>
+                    <button onClick={handleNormalizeData}>Apply Normalization</button>
+                    {error && <p style={{ color: 'red' }}>{error}</p>}
                 </div>
             )}
 
