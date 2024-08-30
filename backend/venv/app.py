@@ -2,6 +2,9 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 import pandas as pd
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import accuracy_score
 
 app = Flask(__name__)
 CORS(app)
@@ -76,6 +79,50 @@ def normalize_data():
         "columns": df_normalized.columns.tolist(),
         "data": data_preview
     })
+
+@app.route('/split', methods=['POST'])
+def split_data():
+    data = request.json
+    test_size = data.get('test_size', 0.2)  # Default to 20% test size
+    df = pd.DataFrame(data.get('data', []))
+    
+    train_df, test_df = train_test_split(df, test_size=test_size)
+    
+    # Convert the first 10 rows of both train and test sets to JSON
+    train_preview = train_df.head(10).to_dict(orient='records')
+    test_preview = test_df.head(10).to_dict(orient='records')
+    
+    return jsonify({
+        "train_data": train_preview,
+        "test_data": test_preview
+    })
+
+@app.route('/train', methods=['POST'])
+def train_model():
+    data = request.json
+    X_train = pd.DataFrame(data.get('X_train', []))
+    y_train = pd.Series(data.get('y_train', []))
+    
+    model = LogisticRegression()
+    model.fit(X_train, y_train)
+    
+    # Save the model if needed (using pickle, joblib, etc.)
+    
+    return jsonify({"status": "Model trained successfully"})
+
+@app.route('/evaluate', methods=['POST'])
+def evaluate_model():
+    data = request.json
+    X_test = pd.DataFrame(data.get('X_test', []))
+    y_test = pd.Series(data.get('y_test', []))
+    
+    # Load the model if needed
+    
+    model = LogisticRegression()  # Placeholder for actual model loading
+    y_pred = model.predict(X_test)
+    accuracy = accuracy_score(y_test, y_pred)
+    
+    return jsonify({"accuracy": accuracy})
 
 if __name__ == "__main__":
     app.run(debug=True)
