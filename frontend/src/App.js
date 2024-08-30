@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
 function App() {
     const [file, setFile] = useState(null);
     const [columns, setColumns] = useState([]);
+    const [selectedColumns, setSelectedColumns] = useState([]);
     const [data, setData] = useState([]);
     const [shape, setShape] = useState(null);
 
@@ -24,8 +25,29 @@ function App() {
             setColumns(response.data.columns);
             setData(response.data.data);
             setShape(response.data.shape);
+            setSelectedColumns(response.data.columns);  // Initially select all columns
         } catch (error) {
             console.error("There was an error uploading the file!", error);
+        }
+    };
+
+    const handleColumnChange = (e) => {
+        const { value, checked } = e.target;
+        setSelectedColumns((prevSelected) =>
+            checked ? [...prevSelected, value] : prevSelected.filter((col) => col !== value)
+        );
+    };
+
+    const handleFeatureSelection = async () => {
+        try {
+            const response = await axios.post('http://127.0.0.1:5000/select_features', {
+                columns: selectedColumns,
+                data: data
+            });
+            setColumns(response.data.columns);
+            setData(response.data.data);
+        } catch (error) {
+            console.error("Error selecting features", error);
         }
     };
 
@@ -34,6 +56,27 @@ function App() {
             <h1>AI Playground</h1>
             <input type="file" onChange={handleFileChange} />
             <button onClick={handleUpload}>Upload and Process</button>
+
+            {columns.length > 0 && (
+                <div>
+                    <h2>Select Features</h2>
+                    <div>
+                        {columns.map((col, index) => (
+                            <label key={index}>
+                                <input
+                                    type="checkbox"
+                                    value={col}
+                                    checked={selectedColumns.includes(col)}
+                                    onChange={handleColumnChange}
+                                />
+                                {col}
+                            </label>
+                        ))}
+                    </div>
+                    <button onClick={handleFeatureSelection}>Apply Feature Selection</button>
+                </div>
+            )}
+
             {data.length > 0 && (
                 <div>
                     <h2>Data Preview</h2>

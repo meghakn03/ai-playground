@@ -19,5 +19,23 @@ def upload_file():
         "data": data_preview
     })
 
+@app.route('/select_features', methods=['POST'])
+def select_features():
+    data = request.json
+    selected_columns = data.get('columns', [])
+    df = pd.DataFrame(data.get('data', []))
+    
+    if selected_columns:
+        df = df[selected_columns]
+
+    # Return the first 10 rows of the selected features
+    data_preview = df.head(10).to_dict(orient='records')
+    
+    return jsonify({
+        "columns": selected_columns,
+        "data": data_preview
+    })
+
+
 if __name__ == "__main__":
     app.run(debug=True)
