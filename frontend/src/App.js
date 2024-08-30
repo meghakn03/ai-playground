@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import './App.css';
 import axios from 'axios';
 import { Line } from 'react-chartjs-2';
 import { Chart as ChartJS, LineElement, CategoryScale, LinearScale, PointElement, Title } from 'chart.js';
@@ -188,153 +189,163 @@ function App() {
 
     return (
         <div className="App">
-            <h1>AI Playground</h1>
-            <input type="file" onChange={handleFileChange} />
-            <button onClick={handleUpload}>Upload and Process</button>
+            <header>
+                <h1>AI Playground</h1>
+            </header>
+            <main>
+                <section className="upload-section">
+                    <input type="file" onChange={handleFileChange} />
+                    <button onClick={handleUpload}>Upload and Process</button>
+                </section>
 
-            {columns.length > 0 && (
-                <div>
-                    <h2>Select Features</h2>
-                    <div>
-                        {columns.map((col, index) => (
-                            <label key={index}>
-                                <input
-                                    type="checkbox"
-                                    value={col}
-                                    checked={selectedColumns.includes(col)}
-                                    onChange={handleColumnChange}
-                                />
-                                {col}
-                            </label>
-                        ))}
-                    </div>
-                    <button onClick={handleFeatureSelection}>Apply Feature Selection</button>
+                {columns.length > 0 && (
+                    <section className="feature-selection-section">
+                        <h2>Select Features</h2>
+                        <div className="feature-selection">
+                            {columns.map((col, index) => (
+                                <label key={index} className="feature-checkbox">
+                                    <input
+                                        type="checkbox"
+                                        value={col}
+                                        checked={selectedColumns.includes(col)}
+                                        onChange={handleColumnChange}
+                                    />
+                                    {col}
+                                </label>
+                            ))}
+                        </div>
+                        <button onClick={handleFeatureSelection}>Apply Feature Selection</button>
 
-                    <h2>Normalization/Standardization</h2>
-                    <select value={normalizationMethod} onChange={handleNormalizationChange}>
-                        <option value="minmax">Min-Max Normalization</option>
-                        <option value="standard">Standardization</option>
-                    </select>
-                    <button onClick={handleNormalizeData}>Apply Normalization</button>
-                    {error && <p style={{ color: 'red' }}>{error}</p>}
-                </div>
-            )}
+                        <h2>Normalization/Standardization</h2>
+                        <div className="normalization">
+                            <select value={normalizationMethod} onChange={handleNormalizationChange}>
+                                <option value="minmax">Min-Max Normalization</option>
+                                <option value="standard">Standardization</option>
+                            </select>
+                            <button onClick={handleNormalizeData}>Apply Normalization</button>
+                        </div>
+                        {error && <p className="error">{error}</p>}
+                    </section>
+                )}
 
-            {data.length > 0 && (
-                <div>
-                    <h2>Data Preview</h2>
-                    <p>Shape: {shape ? `${shape[0]} rows, ${shape[1]} columns` : ''}</p>
-                    <table border="1">
-                        <thead>
-                            <tr>
-                                {columns.map((col, index) => (
-                                    <th key={index}>{col}</th>
-                                ))}
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {data.map((row, index) => (
-                                <tr key={index}>
-                                    {columns.map((col, idx) => (
-                                        <td key={idx}>{row[col]}</td>
+                {data.length > 0 && (
+                    <section className="data-preview-section">
+                        <h2>Data Preview</h2>
+                        <p>Shape: {shape ? `${shape[0]} rows, ${shape[1]} columns` : ''}</p>
+                        <table>
+                            <thead>
+                                <tr>
+                                    {columns.map((col, index) => (
+                                        <th key={index}>{col}</th>
                                     ))}
                                 </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-            )}
-
-            {chartData.labels.length > 0 && (
-                <div>
-                    <h2>Data Visualization</h2>
-                    <Line data={chartData} options={{ responsive: true, plugins: { legend: { position: 'top' } } }} />
-                </div>
-            )}
-
-            {data.length > 0 && (
-                <div>
-                    <h2>Data Splitting</h2>
-                    <label>
-                        Test Size:
-                        <input
-                            type="number"
-                            step="0.01"
-                            min="0"
-                            max="1"
-                            value={testSize}
-                            onChange={handleTestSizeChange}
-                        />
-                    </label>
-                    <button onClick={handleSplitData}>Split Data</button>
-
-                    {trainData.length > 0 && (
-                        <div>
-                            <h2>Training Data Preview</h2>
-                            <table border="1">
-                                <thead>
-                                    <tr>
-                                        {columns.map((col, index) => (
-                                            <th key={index}>{col}</th>
+                            </thead>
+                            <tbody>
+                                {data.map((row, index) => (
+                                    <tr key={index}>
+                                        {columns.map((col, idx) => (
+                                            <td key={idx}>{row[col]}</td>
                                         ))}
                                     </tr>
-                                </thead>
-                                <tbody>
-                                    {trainData.map((row, index) => (
-                                        <tr key={index}>
-                                            {columns.map((col, idx) => (
-                                                <td key={idx}>{row[col]}</td>
+                                ))}
+                            </tbody>
+                        </table>
+                    </section>
+                )}
+
+                {chartData.labels.length > 0 && (
+                    <section className="chart-section">
+                        <h2>Data Visualization</h2>
+                        <Line data={chartData} options={{ responsive: true, plugins: { legend: { position: 'top' } } }} />
+                    </section>
+                )}
+
+                {data.length > 0 && (
+                    <section className="data-splitting-section">
+                        <h2>Data Splitting</h2>
+                        <label>
+                            Test Size:
+                            <input
+                                type="number"
+                                step="0.01"
+                                min="0"
+                                max="1"
+                                value={testSize}
+                                onChange={handleTestSizeChange}
+                            />
+                        </label>
+                        <button onClick={handleSplitData}>Split Data</button>
+
+                        {trainData.length > 0 && (
+                            <div className="train-data-preview">
+                                <h2>Training Data Preview</h2>
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            {columns.map((col, index) => (
+                                                <th key={index}>{col}</th>
                                             ))}
                                         </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-                    )}
-
-                    {testData.length > 0 && (
-                        <div>
-                            <h2>Testing Data Preview</h2>
-                            <table border="1">
-                                <thead>
-                                    <tr>
-                                        {columns.map((col, index) => (
-                                            <th key={index}>{col}</th>
+                                    </thead>
+                                    <tbody>
+                                        {trainData.map((row, index) => (
+                                            <tr key={index}>
+                                                {columns.map((col, idx) => (
+                                                    <td key={idx}>{row[col]}</td>
+                                                ))}
+                                            </tr>
                                         ))}
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {testData.map((row, index) => (
-                                        <tr key={index}>
-                                            {columns.map((col, idx) => (
-                                                <td key={idx}>{row[col]}</td>
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
+
+                        {testData.length > 0 && (
+                            <div className="test-data-preview">
+                                <h2>Testing Data Preview</h2>
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            {columns.map((col, index) => (
+                                                <th key={index}>{col}</th>
                                             ))}
                                         </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-                    )}
-                </div>
-            )}
+                                    </thead>
+                                    <tbody>
+                                        {testData.map((row, index) => (
+                                            <tr key={index}>
+                                                {columns.map((col, idx) => (
+                                                    <td key={idx}>{row[col]}</td>
+                                                ))}
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
+                    </section>
+                )}
 
-            {XTrain.length > 0 && (
-                <div>
-                    <h2>Model Training</h2>
-                    <button onClick={handleTrainModel}>Train Model</button>
-                </div>
-            )}
+                {XTrain.length > 0 && (
+                    <section className="model-training-section">
+                        <h2>Model Training</h2>
+                        <button onClick={handleTrainModel}>Train Model</button>
+                    </section>
+                )}
 
-            {XTest.length > 0 && (
-                <div>
-                    <h2>Model Evaluation</h2>
-                    <button onClick={handleEvaluateModel}>Evaluate Model</button>
-                    {accuracy !== null && <p>Model Accuracy: {accuracy}</p>}
-                </div>
-            )}
+                {XTest.length > 0 && (
+                    <section className="model-evaluation-section">
+                        <h2>Model Evaluation</h2>
+                        <button onClick={handleEvaluateModel}>Evaluate Model</button>
+                        {accuracy !== null && <p>Model Accuracy: {accuracy}</p>}
+                    </section>
+                )}
 
-<button onClick={handleSaveConfig}>Save Configuration</button>
-<button onClick={handleLoadConfig}>Load Configuration</button>
+                <section className="config-section">
+                    <button onClick={handleSaveConfig}>Save Configuration</button>
+                    <button onClick={handleLoadConfig}>Load Configuration</button>
+                </section>
+            </main>
         </div>
     );
 }
