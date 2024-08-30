@@ -158,6 +158,34 @@ function App() {
         setChartData({ labels, datasets });
     };
 
+    const handleSaveConfig = async () => {
+        try {
+            await axios.post('http://127.0.0.1:5000/save_config', {
+                data: data,
+                selectedColumns: selectedColumns,
+                normalizationMethod: normalizationMethod,
+                // Add other config details as needed
+            });
+            console.log("Configuration saved successfully");
+        } catch (error) {
+            console.error("Error saving configuration", error);
+        }
+    };
+    
+    const handleLoadConfig = async () => {
+        try {
+            const response = await axios.get('http://127.0.0.1:5000/load_config');
+            const config = response.data;
+            // Apply the configuration to your app state
+            setData(config.data);
+            setSelectedColumns(config.selectedColumns);
+            setNormalizationMethod(config.normalizationMethod);
+            // Handle other config details as needed
+        } catch (error) {
+            console.error("Error loading configuration", error);
+        }
+    };
+
     return (
         <div className="App">
             <h1>AI Playground</h1>
@@ -304,6 +332,9 @@ function App() {
                     {accuracy !== null && <p>Model Accuracy: {accuracy}</p>}
                 </div>
             )}
+
+<button onClick={handleSaveConfig}>Save Configuration</button>
+<button onClick={handleLoadConfig}>Load Configuration</button>
         </div>
     );
 }

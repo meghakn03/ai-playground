@@ -5,6 +5,8 @@ from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score
+import json
+import os
 
 app = Flask(__name__)
 CORS(app)
@@ -123,6 +125,22 @@ def evaluate_model():
     accuracy = accuracy_score(y_test, y_pred)
     
     return jsonify({"accuracy": accuracy})
+
+@app.route('/save_config', methods=['POST'])
+def save_config():
+    data = request.json
+    with open('config.json', 'w') as f:
+        json.dump(data, f)
+    return jsonify({"status": "Configuration saved successfully"})
+
+@app.route('/load_config', methods=['GET'])
+def load_config():
+    if os.path.exists('config.json'):
+        with open('config.json', 'r') as f:
+            config = json.load(f)
+        return jsonify(config)
+    else:
+        return jsonify({"error": "No configuration found"}), 404
 
 if __name__ == "__main__":
     app.run(debug=True)
