@@ -281,7 +281,6 @@ const handleEvaluateModel = async () => {
         }));
       };
       
-
       return (
         <div className="App">
             <header>
@@ -292,74 +291,76 @@ const handleEvaluateModel = async () => {
                     <input type="file" onChange={handleFileChange} />
                     <button onClick={handleUpload}>Upload and Process</button>
                 </section>
-
+    
                 {columns.length > 0 && (
-    <section className="feature-data-info">
-        <div className="feature-selection-section">
-            <h2>Select Features</h2>
-            <div className="feature-selection">
-                {columns.map((col, index) => (
-                    <label key={index} className="feature-checkbox">
-                        <input
-                            type="checkbox"
-                            value={col}
-                            checked={selectedColumns.includes(col)}
-                            onChange={handleColumnChange}
-                        />
-                        {col}
-                    </label>
-                ))}
-            </div>
-            <button onClick={handleFeatureSelection}>Select Features</button>
-        </div>
-
-        <div className="data-info-section">
-            <h2>Data Information</h2>
-            <p>{shape && `Shape: ${shape[0]} rows, ${shape[1]} columns`}</p>
-        </div>
-    </section>
-)}
-
-                <section className="data-preview-section">
-                    <h2>Data Preview</h2>
-                    <table>
-                        <thead>
-                            <tr>
+                    <section className="feature-data-info">
+                        <div className="feature-selection-section">
+                            <h2>Select Features</h2>
+                            <div className="feature-selection">
                                 {columns.map((col, index) => (
-                                    <th key={index}>{col}</th>
+                                    <label key={index} className="feature-checkbox">
+                                        <input
+                                            type="checkbox"
+                                            value={col}
+                                            checked={selectedColumns.includes(col)}
+                                            onChange={handleColumnChange}
+                                        />
+                                        {col}
+                                    </label>
                                 ))}
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {data.map((row, rowIndex) => (
-                                <tr key={rowIndex}>
-                                    {columns.map((col, colIndex) => (
-                                        <td key={colIndex}>{row[col]}</td>
+                            </div>
+                            <button onClick={handleFeatureSelection}>Select Features</button>
+                        </div>
+    
+                        <div className="data-info-section">
+                            <h2>Data Information</h2>
+                            <p>{shape && `Shape: ${shape[0]} rows, ${shape[1]} columns`}</p>
+                        </div>
+                    </section>
+                )}
+    
+                <div className="data-normalization-container">
+                    <section className="data-preview-section">
+                        <h2>Data Preview</h2>
+                        <table>
+                            <thead>
+                                <tr>
+                                    {columns.map((col, index) => (
+                                        <th key={index}>{col}</th>
                                     ))}
                                 </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </section>
+                            </thead>
+                            <tbody>
+                                {data.map((row, rowIndex) => (
+                                    <tr key={rowIndex}>
+                                        {columns.map((col, colIndex) => (
+                                            <td key={colIndex}>{row[col]}</td>
+                                        ))}
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </section>
+    
+                    <section className="normalization-section">
+    <div className="normalization-controls">
+        <h3 htmlFor="normalizationMethod">Normalization Method:</h3>
+        <select
+            id="normalizationMethod"
+            value={normalizationMethod}
+            onChange={handleNormalizationChange}
+        >
+            <option value="minmax">Min-Max Scaling</option>
+            <option value="standard">Standard Scaling</option>
+            <option value="zscore">Z-Score Normalization</option>
+        </select>
+        <button onClick={handleNormalizeData}>Normalize Data</button>
+    </div>
+    {error && <p className="error">{error}</p>}
+</section>
 
-                <section className="normalization-section">
-                    <h2>Normalization</h2>
-                    <div>
-                        <label htmlFor="normalizationMethod">Normalization Method:</label>
-                        <select
-                            id="normalizationMethod"
-                            value={normalizationMethod}
-                            onChange={handleNormalizationChange}
-                        >
-                            <option value="minmax">Min-Max Scaling</option>
-                            <option value="standard">Standard Scaling</option>
-                            <option value="zscore">Z-Score Normalization</option>
-                        </select>
-                    </div>
-                    <button onClick={handleNormalizeData}>Normalize Data</button>
-                    {error && <p className="error">{error}</p>}
-                </section>
-
+                </div>
+    
                 <section className="split-data-section">
                     <h2>Split Data</h2>
                     <label>
@@ -374,7 +375,7 @@ const handleEvaluateModel = async () => {
                         />
                     </label>
                     <button onClick={handleSplitData}>Split Data</button>
-
+    
                     <h3>Train Data</h3>
                     <table>
                         <thead>
@@ -394,7 +395,7 @@ const handleEvaluateModel = async () => {
                             ))}
                         </tbody>
                     </table>
-
+    
                     <h3>Test Data</h3>
                     <table>
                         <thead>
@@ -415,7 +416,7 @@ const handleEvaluateModel = async () => {
                         </tbody>
                     </table>
                 </section>
-
+    
                 <section className="model-selection-section">
                     <h2>Model Selection</h2>
                     <label>
@@ -435,7 +436,7 @@ const handleEvaluateModel = async () => {
                             ))}
                         </select>
                     </label>
-
+    
                     <h3>Hyperparameters</h3>
                     {selectedModel === 'Logistic Regression' && modelType === 'classification' && (
                         <label>
@@ -488,23 +489,22 @@ const handleEvaluateModel = async () => {
                     <button onClick={handleTrainModel}>Train Model</button>
                     {modelTrained && <p>MODEL TRAINED</p>}
                 </section>
-
+    
                 <section className="evaluation-section">
-    <h2>Evaluate Model</h2>
-    <button onClick={handleEvaluateModel}>Evaluate</button>
-    {accuracy !== null && <p>Accuracy: {accuracy}</p>}
-    {evaluationComplete !== null && evaluationComplete && <p>EVALUATION COMPLETE</p>}
-    {evaluationComplete === false && <p>Evaluation failed. Check the console for more details.</p>}
-</section>
-
-
-<section className="chart-section">
-                <h2>Data Visualization</h2>
-                <div className="chart-container">
-                    <Line data={chartData} />
-                </div>
-            </section>
-
+                    <h2>Evaluate Model</h2>
+                    <button onClick={handleEvaluateModel}>Evaluate</button>
+                    {accuracy !== null && <p>Accuracy: {accuracy}</p>}
+                    {evaluationComplete !== null && evaluationComplete && <p>EVALUATION COMPLETE</p>}
+                    {evaluationComplete === false && <p>Evaluation failed. Check the console for more details.</p>}
+                </section>
+    
+                <section className="chart-section">
+                    <h2>Data Visualization</h2>
+                    <div className="chart-container">
+                        <Line data={chartData} />
+                    </div>
+                </section>
+    
                 <section className="config-section">
                     <h2>Save/Load Configuration</h2>
                     <button onClick={handleSaveConfig}>Save Configuration</button>
@@ -513,6 +513,7 @@ const handleEvaluateModel = async () => {
             </main>
         </div>
     );
+    
 }
 
 export default App;
