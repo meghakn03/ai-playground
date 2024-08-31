@@ -8,6 +8,7 @@ ChartJS.register(LineElement, CategoryScale, LinearScale, PointElement, Title);
 
 function App() {
     const [file, setFile] = useState(null);
+    const [fileUploaded, setFileUploaded] = useState(false);
     const [columns, setColumns] = useState([]);
     const [selectedColumns, setSelectedColumns] = useState([]);
     const [data, setData] = useState([]);
@@ -53,6 +54,7 @@ function App() {
             setData(response.data.data);
             setShape(response.data.shape);
             setSelectedColumns(response.data.columns); // Initially select all columns
+            setFileUploaded(true); // Set fileUploaded to true when file is processed
             updateChart(response.data.data, response.data.columns); // Update chart data on upload
         } catch (error) {
             console.error("There was an error uploading the file!", error);
@@ -292,6 +294,9 @@ const handleEvaluateModel = async () => {
                     <button onClick={handleUpload}>Upload and Process</button>
                 </section>
 
+                <section className={`other-sections ${fileUploaded ? '' : 'disabled-section'}`}>
+
+
                 {columns.length > 0 && (
                     <section className="feature-data-info">
                         <div className="feature-selection-section">
@@ -514,6 +519,7 @@ const handleEvaluateModel = async () => {
                     <h2>Save/Load Configuration</h2>
                     <button onClick={handleSaveConfig}>Save Configuration</button>
                     <button onClick={handleLoadConfig}>Load Configuration</button>
+                </section>
                 </section>
             </main>
         </div>

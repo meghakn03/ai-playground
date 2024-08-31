@@ -428,3 +428,9 @@ button:active {
     margin-bottom: 20px; /* Space between stacked sections */
   }
 }
+
+.disabled-section {
+  opacity: 0.5;
+  pointer-events: none;
+  cursor: not-allowed;
+}
