@@ -266,6 +266,10 @@ def evaluate_model():
         X_test = pd.DataFrame(data['X_test'])
         y_test = pd.Series(data['y_test'])
         
+        # Ensure y_test is integer type (for classification)
+        if y_test.dtype != int:
+            y_test = y_test.astype(int)
+        
         # Load the model
         with open('model.pkl', 'rb') as f:
             model = pickle.load(f)
@@ -282,8 +286,8 @@ def evaluate_model():
             return jsonify({'error': 'Model does not support scoring'}), 400
 
     except Exception as e:
-        print("Error:", str(e))  # Debugging
-        return jsonify({'error': str(e)}), 500
+        print("Error during evaluation:", str(e))  # More detailed debugging
+        return jsonify({'error': 'Error during evaluation: ' + str(e)}), 500
 
 if __name__ == "__main__":
     app.run(debug=True)

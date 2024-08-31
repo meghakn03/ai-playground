@@ -27,7 +27,8 @@ function App() {
     const [hyperparameters, setHyperparameters] = useState({ C: 1.0, maxDepth: 5, nEstimators: 100 });
     const classificationModels = ['Logistic Regression', 'Decision Trees', 'Random Forest', 'SVM'];
     const regressionModels = ['Linear Regression', 'Ridge', 'Lasso'];
-
+    const [modelTrained, setModelTrained] = useState(false);
+    const [evaluationComplete, setEvaluationComplete] = useState(false);
     // State for charts
     const [chartData, setChartData] = useState({
         labels: [],
@@ -178,26 +179,36 @@ const handleTrainModel = async () => {
         });
 
         console.log(response.data.message);
+        setModelTrained(true); // Set model trained message
     } catch (error) {
         console.error('Error training model:', error.response ? error.response.data : error.message);
+        setModelTrained(false);
+
+    }
+}; 
+
+const handleEvaluateModel = async () => {
+    try {
+        const response = await axios.post('http://127.0.0.1:5000/evaluate', {
+            X_test: XTest,
+            y_test: yTest
+        });
+
+        const score = response.data.score;
+        if (score !== undefined) {
+            setAccuracy(score);
+            setEvaluationComplete(true); // Set evaluation complete message
+        } else {
+            console.error("Score is undefined");
+            setEvaluationComplete(false);
+        }
+    } catch (error) {
+        console.error("Error evaluating model", error);
+        setEvaluationComplete(false);
     }
 };
 
-    
-      
-      
 
-    const handleEvaluateModel = async () => {
-        try {
-            const response = await axios.post('http://127.0.0.1:5000/evaluate', {
-                X_test: XTest,
-                y_test: yTest
-            });
-            setAccuracy(response.data.accuracy);
-        } catch (error) {
-            console.error("Error evaluating model", error);
-        }
-    };
 
     const updateChart = (data, columns) => {
         if (data.length === 0 || columns.length === 0) return;
@@ -473,13 +484,17 @@ const handleTrainModel = async () => {
                         </label>
                     )}
                     <button onClick={handleTrainModel}>Train Model</button>
+                    {modelTrained && <p>MODEL TRAINED</p>}
                 </section>
 
                 <section className="evaluation-section">
-                    <h2>Evaluate Model</h2>
-                    <button onClick={handleEvaluateModel}>Evaluate</button>
-                    {accuracy !== null && <p>Accuracy: {accuracy}</p>}
-                </section>
+    <h2>Evaluate Model</h2>
+    <button onClick={handleEvaluateModel}>Evaluate</button>
+    {accuracy !== null && <p>Accuracy: {accuracy}</p>}
+    {evaluationComplete !== null && evaluationComplete && <p>EVALUATION COMPLETE</p>}
+    {evaluationComplete === false && <p>Evaluation failed. Check the console for more details.</p>}
+</section>
+
 
                 <section className="chart-section">
                     <h2>Data Visualization</h2>
