@@ -167,24 +167,25 @@ def train_model():
         return jsonify({'error': 'Missing required parameters'}), 400
     
     try:
+        # Convert lists to DataFrame and Series
         X_train = pd.DataFrame(data['X_train'])
         y_train = pd.Series(data['y_train'])
         
         print("X_train shape:", X_train.shape)
         print("y_train shape:", y_train.shape)
         
-        categorical_cols = X_train.select_dtypes(include=['object']).columns
-        if not categorical_cols.empty:
-            encoder = OneHotEncoder(drop='first', sparse_output=False)
-            encoded_X_train = pd.DataFrame(encoder.fit_transform(X_train[categorical_cols]).toarray(), columns=encoder.get_feature_names_out(categorical_cols))
-            X_train = X_train.drop(categorical_cols, axis=1)
-            X_train = pd.concat([X_train, encoded_X_train], axis=1)
-        
+        # Determine if the task is classification or regression
         model_type = data['modelType']
         selected_model = data['selectedModel']
         hyperparameters = data['hyperparameters']
+
+        # Check if the target variable is continuous or categorical
+        is_regression = y_train.apply(lambda x: isinstance(x, (int, float))).all()
         
         if model_type == 'classification':
+            if not y_train.apply(lambda x: isinstance(x, (int, str))).any():
+                return jsonify({'error': 'Target variable for classification should be categorical'}), 400
+
             if selected_model == 'Logistic Regression':
                 model = LogisticRegression(C=hyperparameters.get('C', 1.0))
             elif selected_model == 'Decision Trees':
@@ -195,26 +196,34 @@ def train_model():
                 model = SVC(C=hyperparameters.get('C', 1.0))
             else:
                 return jsonify({'error': 'Invalid classification model'}), 400
+
         elif model_type == 'regression':
-            if selected_model == 'Linear Regression':
-                model = LinearRegression()
-            elif selected_model == 'Ridge':
-                model = Ridge(alpha=hyperparameters.get('alpha', 1.0))
-            elif selected_model == 'Lasso':
-                model = Lasso(alpha=hyperparameters.get('alpha', 1.0))
+            if is_regression:
+                if selected_model == 'Linear Regression':
+                    model = LinearRegression()
+                elif selected_model == 'Ridge':
+                    model = Ridge(alpha=hyperparameters.get('alpha', 1.0))
+                elif selected_model == 'Lasso':
+                    model = Lasso(alpha=hyperparameters.get('alpha', 1.0))
+                else:
+                    return jsonify({'error': 'Invalid regression model'}), 400
             else:
-                return jsonify({'error': 'Invalid regression model'}), 400
+                return jsonify({'error': 'Target variable for regression should be continuous'}), 400
+        
         else:
             return jsonify({'error': 'Invalid model type'}), 400
         
+        # Train the model
         model.fit(X_train, y_train)
         
+        # Save the model
         with open('model.pkl', 'wb') as f:
             pickle.dump(model, f)
         
         return jsonify({'message': 'Model trained successfully'})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
 
 @app.route('/evaluate', methods=['POST'])
 def evaluate_model():
