@@ -286,7 +286,7 @@ const handleEvaluateModel = async () => {
       return (
         <div className="App">
             <header>
-                <h1>AI Playground</h1>
+                <h1>InsightAI</h1>
             </header>
             <main>
                 <section className="upload-section">

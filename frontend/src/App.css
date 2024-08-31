@@ -1,7 +1,7 @@
 /* General Styles */
 body {
   font-family: 'Roboto', sans-serif;
-  background: linear-gradient(135deg, #2c3e50, #bdc3c7);
+  background: linear-gradient(135deg, #f5f7fa, #c3cfe2); /* Subtle gradient */
   color: #333;
   margin: 0;
   padding: 0;
@@ -16,13 +16,22 @@ body {
 }
 
 header {
-  background: linear-gradient(135deg, #3498db, #2c3e50);
+  background: linear-gradient(135deg, #6a11cb, #2575fc); /* Vivid gradient */
   color: #fff;
   padding: 30px 20px;
   border-radius: 10px;
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
   margin-bottom: 40px;
   animation: fadeInDown 1s ease-out;
+}
+
+section {
+  margin-bottom: 40px;
+  padding: 30px;
+  border-radius: 12px;
+  background-color: rgba(255, 255, 255, 0.95); /* Slightly transparent white */
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+  animation: fadeInUp 1s ease-out;
 }
 
 @keyframes fadeInDown {
@@ -68,14 +77,14 @@ section {
 }
 
 h2 {
-  color: #34495e;
+  color: #2c3e50;
   font-size: 2em;
   margin-top: 0;
   margin-bottom: 20px;
 }
 
 button {
-  background-color: #e67e22;
+  background-color: #3498db; /* Cool blue */
   color: #fff;
   border: none;
   padding: 14px 28px;
@@ -87,7 +96,7 @@ button {
 }
 
 button:hover {
-  background-color: #d35400;
+  background-color: #2980b9; /* Darker blue */
 }
 
 button:active {
@@ -97,6 +106,8 @@ button:active {
 input[type="file"] {
   margin: 10px 0;
   padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
 }
 
 input[type="number"],
@@ -187,8 +198,8 @@ tbody tr:hover {
   height: 200px;
   padding: 20px;
   border-radius: 10px;
-  background-color: rgba(255, 255, 255, 0.9);
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+  background-color: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
   z-index: 1000;
   animation: fadeInRight 1s ease-out;
 }
@@ -208,10 +219,10 @@ tbody tr:hover {
 
 .normalization-section {
   width: 580px;
-  background-color: rgba(255, 255, 255, 0.9);
+  background-color: rgba(255, 255, 255, 0.95);
   padding: 10px;
   border-radius: 10px;
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
   position: absolute;
   top: 0;
   right: 0;
@@ -235,7 +246,7 @@ tbody tr:hover {
 }
 
 button {
-  background-color: #e67e22;
+  background-color: #3498db; /* Cool blue */
   color: #fff;
   border: none;
   padding: 8px 16px;
@@ -246,7 +257,7 @@ button {
 }
 
 button:hover {
-  background-color: #d35400;
+  background-color: #2980b9; /* Darker blue */
 }
 
 button:active {
