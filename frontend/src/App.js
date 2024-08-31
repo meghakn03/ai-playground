@@ -294,29 +294,31 @@ const handleEvaluateModel = async () => {
                 </section>
 
                 {columns.length > 0 && (
-                    <section className="feature-selection-section">
-                        <h2>Select Features</h2>
-                        <div className="feature-selection">
-                            {columns.map((col, index) => (
-                                <label key={index} className="feature-checkbox">
-                                    <input
-                                        type="checkbox"
-                                        value={col}
-                                        checked={selectedColumns.includes(col)}
-                                        onChange={handleColumnChange}
-                                    />
-                                    {col}
-                                </label>
-                            ))}
-                        </div>
-                        <button onClick={handleFeatureSelection}>Select Features</button>
-                    </section>
-                )}
+    <section className="feature-data-info">
+        <div className="feature-selection-section">
+            <h2>Select Features</h2>
+            <div className="feature-selection">
+                {columns.map((col, index) => (
+                    <label key={index} className="feature-checkbox">
+                        <input
+                            type="checkbox"
+                            value={col}
+                            checked={selectedColumns.includes(col)}
+                            onChange={handleColumnChange}
+                        />
+                        {col}
+                    </label>
+                ))}
+            </div>
+            <button onClick={handleFeatureSelection}>Select Features</button>
+        </div>
 
-                <section className="data-info-section">
-                    <h2>Data Information</h2>
-                    <p>{shape && `Shape: ${shape[0]} rows, ${shape[1]} columns`}</p>
-                </section>
+        <div className="data-info-section">
+            <h2>Data Information</h2>
+            <p>{shape && `Shape: ${shape[0]} rows, ${shape[1]} columns`}</p>
+        </div>
+    </section>
+)}
 
                 <section className="data-preview-section">
                     <h2>Data Preview</h2>
@@ -496,10 +498,12 @@ const handleEvaluateModel = async () => {
 </section>
 
 
-                <section className="chart-section">
-                    <h2>Data Visualization</h2>
+<section className="chart-section">
+                <h2>Data Visualization</h2>
+                <div className="chart-container">
                     <Line data={chartData} />
-                </section>
+                </div>
+            </section>
 
                 <section className="config-section">
                     <h2>Save/Load Configuration</h2>
