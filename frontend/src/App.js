@@ -148,31 +148,41 @@ function App() {
         }
     };
     
-    
+    // Label encoding function
+const labelEncode = (labels) => {
+    const uniqueLabels = [...new Set(labels)];
+    const labelMap = new Map(uniqueLabels.map((label, index) => [label, index]));
+    return labels.map(label => labelMap.get(label));
+};
 
-    const handleTrainModel = async () => {
-        console.log("Training data:", {
-            XTrain,
-            yTrain,
-            modelType,
-            selectedModel,
-            hyperparameters
+
+const handleTrainModel = async () => {
+    console.log("Training data:", {
+        XTrain,
+        yTrain,
+        modelType,
+        selectedModel,
+        hyperparameters
+    });
+
+    // Encode yTrain labels if the model type is classification
+    const encodedYTrain = modelType === 'classification' ? labelEncode(yTrain) : yTrain;
+
+    try {
+        const response = await axios.post('http://127.0.0.1:5000/train', {
+            X_train: XTrain, // Training features
+            y_train: encodedYTrain, // Encoded training labels
+            modelType,       // 'classification' or 'regression'
+            selectedModel,   // Selected model name
+            hyperparameters  // Hyperparameters object
         });
-    
-        try {
-            const response = await axios.post('http://127.0.0.1:5000/train', {
-                X_train: XTrain, // Training features
-                y_train: yTrain, // Training labels
-                modelType,       // 'classification' or 'regression'
-                selectedModel,   // Selected model name
-                hyperparameters  // Hyperparameters object
-            });
-            
-            console.log(response.data.message);
-        } catch (error) {
-            console.error('Error training model:', error.response ? error.response.data : error.message);
-        }
-    };
+
+        console.log(response.data.message);
+    } catch (error) {
+        console.error('Error training model:', error.response ? error.response.data : error.message);
+    }
+};
+
     
       
       

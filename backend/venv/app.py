@@ -11,6 +11,8 @@ from sklearn.metrics import accuracy_score
 import json
 import os
 import pickle
+from sklearn.preprocessing import LabelEncoder
+import requests
 
 app = Flask(__name__)
 CORS(app)
@@ -162,10 +164,11 @@ def train_model():
     data = request.json
 
     print("Received data:", data)
-    
-    if 'X_train' not in data or 'y_train' not in data or 'modelType' not in data or 'selectedModel' not in data or 'hyperparameters' not in data:
+
+    required_fields = ['X_train', 'y_train', 'modelType', 'selectedModel', 'hyperparameters']
+    if not all(field in data for field in required_fields):
         return jsonify({'error': 'Missing required parameters'}), 400
-    
+
     try:
         # Convert lists to DataFrame and Series
         X_train = pd.DataFrame(data['X_train'])
@@ -173,15 +176,15 @@ def train_model():
         
         print("X_train shape:", X_train.shape)
         print("y_train shape:", y_train.shape)
-        
-        # Determine if the task is classification or regression
+
+        # Check if the task is classification or regression
         model_type = data['modelType']
         selected_model = data['selectedModel']
         hyperparameters = data['hyperparameters']
 
         # Check if the target variable is continuous or categorical
         is_regression = y_train.apply(lambda x: isinstance(x, (int, float))).all()
-        
+
         if model_type == 'classification':
             if not y_train.apply(lambda x: isinstance(x, (int, str))).any():
                 return jsonify({'error': 'Target variable for classification should be categorical'}), 400
@@ -209,17 +212,17 @@ def train_model():
                     return jsonify({'error': 'Invalid regression model'}), 400
             else:
                 return jsonify({'error': 'Target variable for regression should be continuous'}), 400
-        
+
         else:
             return jsonify({'error': 'Invalid model type'}), 400
-        
+
         # Train the model
         model.fit(X_train, y_train)
-        
+
         # Save the model
         with open('model.pkl', 'wb') as f:
             pickle.dump(model, f)
-        
+
         return jsonify({'message': 'Model trained successfully'})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
@@ -228,21 +231,34 @@ def train_model():
 @app.route('/evaluate', methods=['POST'])
 def evaluate_model():
     data = request.json
-    X_test = pd.DataFrame(data['X_test'])
-    y_test = pd.Series(data['y_test'])
-    
-    if not os.path.exists('model.pkl'):
-        return jsonify({'error': 'No model found to evaluate'}), 404
-    
-    with open('model.pkl', 'rb') as f:
-        model = pickle.load(f)
+
+    if 'X_test' not in data or 'y_test' not in data:
+        return jsonify({'error': 'Missing required parameters'}), 400
     
     try:
+        # Convert lists to DataFrame and Series
+        X_test = pd.DataFrame(data['X_test'])
+        y_test = pd.Series(data['y_test'])
+        
+        # Load the model
+        with open('model.pkl', 'rb') as f:
+            model = pickle.load(f)
+        
+        # Predict and evaluate
         predictions = model.predict(X_test)
-        accuracy = accuracy_score(y_test, predictions)
-        return jsonify({'accuracy': accuracy})
+        print("Predictions:", predictions)  # Debugging
+
+        if hasattr(model, 'score'):
+            score = model.score(X_test, y_test)
+            print("Score:", score)  # Debugging
+            return jsonify({'message': 'Evaluation successful', 'score': score})
+        else:
+            return jsonify({'error': 'Model does not support scoring'}), 400
+
     except Exception as e:
+        print("Error:", str(e))  # Debugging
         return jsonify({'error': str(e)}), 500
+
 
 if __name__ == "__main__":
     app.run(debug=True)
