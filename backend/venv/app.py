@@ -8,44 +8,50 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.svm import SVC
 from sklearn.metrics import accuracy_score
+import pickle
 import json
 import os
-import pickle
-from sklearn.preprocessing import LabelEncoder
-import requests
+import logging
+import sklearn
+
+logging.basicConfig(level=logging.DEBUG)
 
 app = Flask(__name__)
 CORS(app)
 
-# Global variable to hold the trained model
-model = None
-
-# Check scikit-learn version
-import sklearn
-print(f"Scikit-learn version: {sklearn.__version__}")
+# Global variables to manage dataset and normalization state
+original_data = None
+normalized_data = None
+current_normalization_method = None
 
 @app.route('/upload', methods=['POST'])
 def upload_file():
+    global original_data, normalized_data, current_normalization_method
+
     file = request.files['file']
-    df = pd.read_csv(file)
-    
-    data_preview = df.head(10).to_dict(orient='records')
+    original_data = pd.read_csv(file)
+    normalized_data = None
+    current_normalization_method = None
+
+    data_preview = original_data.head(10).to_dict(orient='records')
     
     return jsonify({
-        "columns": df.columns.tolist(),
-        "shape": df.shape,
+        "columns": original_data.columns.tolist(),
+        "shape": original_data.shape,
         "data": data_preview
     })
 
 @app.route('/select_features', methods=['POST'])
 def select_features():
+    global original_data, normalized_data
+
     data = request.json
     selected_columns = data.get('columns', [])
-    df = pd.DataFrame(data.get('data', []))
-    
+    df = original_data.copy()
+
     if selected_columns:
         df = df[selected_columns]
-
+        
     data_preview = df.head(10).to_dict(orient='records')
     
     return jsonify({
@@ -55,25 +61,32 @@ def select_features():
 
 @app.route('/normalize', methods=['POST'])
 def normalize_data():
+    global original_data, normalized_data, current_normalization_method
+
     try:
         # Parse request data
         data = request.json
         method = data.get('method', 'minmax')
         selected_columns = data.get('columns', [])
-        df = pd.DataFrame(data.get('data', []))
-        
+
+        if original_data is None:
+            return jsonify({"error": "No data available. Please upload data first."}), 400
+
+        if normalized_data is not None:
+            return jsonify({"error": "Data is already normalized. Please upload new data or reset."}), 400
+
+        df = original_data.copy()
+
         if selected_columns:
             df = df[selected_columns]
 
         # Encoding categorical columns
         categorical_cols = df.select_dtypes(include=['object']).columns
         if not categorical_cols.empty:
-            # Use the appropriate parameter based on the scikit-learn version
             encoder_params = {'drop': 'first', 'sparse_output': False} if sklearn.__version__ >= '1.0' else {'drop': 'first', 'sparse': False}
             encoder = OneHotEncoder(**encoder_params)
             encoded_array = encoder.fit_transform(df[categorical_cols])
             
-            # Check if the output is a sparse matrix or dense array
             if hasattr(encoded_array, 'toarray'):
                 encoded_array = encoded_array.toarray()
                 
@@ -87,31 +100,45 @@ def normalize_data():
         if numeric_df.empty:
             return jsonify({"error": "No numeric columns to normalize"}), 400
 
-        # Normalization
+        scaler = None
+
+        if current_normalization_method:
+            if current_normalization_method == 'minmax':
+                # Revert MinMax scaling
+                scaler = MinMaxScaler()
+                scaler.fit(numeric_df)  # Refit the scaler with the current data
+                numeric_df = scaler.inverse_transform(numeric_df)
+            elif current_normalization_method == 'standard':
+                # Revert Standard Scaling
+                scaler = StandardScaler()
+                scaler.fit(numeric_df)  # Refit the scaler with the current data
+                numeric_df = scaler.inverse_transform(numeric_df)
+
+        # Apply new normalization
         if method == 'minmax':
             scaler = MinMaxScaler()
         elif method == 'standard':
             scaler = StandardScaler()
+        elif method == 'zscore':
+            scaler = StandardScaler()  # StandardScaler is used for Z-Score normalization
         else:
             return jsonify({"error": "Invalid normalization method"}), 400
 
+        # Apply normalization
         numeric_df[numeric_df.columns] = scaler.fit_transform(numeric_df)
-        
-        # Reassemble the DataFrame
-        df_normalized = pd.concat([non_numeric_df, numeric_df], axis=1)
-
-        # Reorder columns to match the original DataFrame
-        df_normalized = df_normalized[df.columns]
+        normalized_data = pd.concat([non_numeric_df, numeric_df], axis=1)
+        current_normalization_method = method
 
         # Prepare preview data
-        data_preview = df_normalized.head(10).to_dict(orient='records')
-        
+        data_preview = normalized_data.head(10).to_dict(orient='records')
+
         return jsonify({
-            "columns": df_normalized.columns.tolist(),
+            "columns": normalized_data.columns.tolist(),
             "data": data_preview
         })
     
     except Exception as e:
+        logging.error(f"Error normalizing data: {e}")
         return jsonify({"error": str(e)}), 500
 
 @app.route('/split', methods=['POST'])
@@ -227,7 +254,6 @@ def train_model():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-
 @app.route('/evaluate', methods=['POST'])
 def evaluate_model():
     data = request.json
@@ -258,7 +284,6 @@ def evaluate_model():
     except Exception as e:
         print("Error:", str(e))  # Debugging
         return jsonify({'error': str(e)}), 500
-
 
 if __name__ == "__main__":
     app.run(debug=True)

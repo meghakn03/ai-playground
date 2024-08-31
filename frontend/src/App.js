@@ -79,10 +79,10 @@ function App() {
         }
     };
 
-    const handleNormalizationChange = (e) => {
-        setNormalizationMethod(e.target.value);
-    };
-
+ // Function to handle normalization method change
+ const handleNormalizationChange = (event) => {
+    setNormalizationMethod(event.target.value);
+};
     const handleNormalizeData = async () => {
         try {
             const response = await axios.post('http://127.0.0.1:5000/normalize', {
@@ -271,7 +271,7 @@ const handleTrainModel = async () => {
       };
       
 
-    return (
+      return (
         <div className="App">
             <header>
                 <h1>AI Playground</h1>
@@ -332,24 +332,16 @@ const handleTrainModel = async () => {
                 <section className="normalization-section">
                     <h2>Normalization</h2>
                     <div>
-                        <label>
-                            <input
-                                type="radio"
-                                value="minmax"
-                                checked={normalizationMethod === 'minmax'}
-                                onChange={handleNormalizationChange}
-                            />
-                            Min-Max Scaling
-                        </label>
-                        <label>
-                            <input
-                                type="radio"
-                                value="zscore"
-                                checked={normalizationMethod === 'zscore'}
-                                onChange={handleNormalizationChange}
-                            />
-                            Z-Score Normalization
-                        </label>
+                        <label htmlFor="normalizationMethod">Normalization Method:</label>
+                        <select
+                            id="normalizationMethod"
+                            value={normalizationMethod}
+                            onChange={handleNormalizationChange}
+                        >
+                            <option value="minmax">Min-Max Scaling</option>
+                            <option value="standard">Standard Scaling</option>
+                            <option value="zscore">Z-Score Normalization</option>
+                        </select>
                     </div>
                     <button onClick={handleNormalizeData}>Normalize Data</button>
                     {error && <p className="error">{error}</p>}
