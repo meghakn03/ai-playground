@@ -291,7 +291,7 @@ const handleEvaluateModel = async () => {
                     <input type="file" onChange={handleFileChange} />
                     <button onClick={handleUpload}>Upload and Process</button>
                 </section>
-    
+
                 {columns.length > 0 && (
                     <section className="feature-data-info">
                         <div className="feature-selection-section">
@@ -311,14 +311,14 @@ const handleEvaluateModel = async () => {
                             </div>
                             <button onClick={handleFeatureSelection}>Select Features</button>
                         </div>
-    
+
                         <div className="data-info-section">
                             <h2>Data Information</h2>
                             <p>{shape && `Shape: ${shape[0]} rows, ${shape[1]} columns`}</p>
                         </div>
                     </section>
                 )}
-    
+
                 <div className="data-normalization-container">
                     <section className="data-preview-section">
                         <h2>Data Preview</h2>
@@ -341,26 +341,25 @@ const handleEvaluateModel = async () => {
                             </tbody>
                         </table>
                     </section>
-    
-                    <section className="normalization-section">
-    <div className="normalization-controls">
-        <h3 htmlFor="normalizationMethod">Normalization Method:</h3>
-        <select
-            id="normalizationMethod"
-            value={normalizationMethod}
-            onChange={handleNormalizationChange}
-        >
-            <option value="minmax">Min-Max Scaling</option>
-            <option value="standard">Standard Scaling</option>
-            <option value="zscore">Z-Score Normalization</option>
-        </select>
-        <button onClick={handleNormalizeData}>Normalize Data</button>
-    </div>
-    {error && <p className="error">{error}</p>}
-</section>
 
+                    <section className="normalization-section">
+                        <div className="normalization-controls">
+                            <h3 htmlFor="normalizationMethod">Normalization Method:</h3>
+                            <select
+                                id="normalizationMethod"
+                                value={normalizationMethod}
+                                onChange={handleNormalizationChange}
+                            >
+                                <option value="minmax">Min-Max Scaling</option>
+                                <option value="standard">Standard Scaling</option>
+                                <option value="zscore">Z-Score Normalization</option>
+                            </select>
+                            <button onClick={handleNormalizeData}>Normalize Data</button>
+                        </div>
+                        {error && <p className="error">{error}</p>}
+                    </section>
                 </div>
-    
+
                 <section className="split-data-section">
                     <h2>Split Data</h2>
                     <label>
@@ -375,136 +374,142 @@ const handleEvaluateModel = async () => {
                         />
                     </label>
                     <button onClick={handleSplitData}>Split Data</button>
-    
-                    <h3>Train Data</h3>
-                    <table>
-                        <thead>
-                            <tr>
-                                {columns.map((col, index) => (
-                                    <th key={index}>{col}</th>
-                                ))}
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {trainData.map((row, rowIndex) => (
-                                <tr key={rowIndex}>
-                                    {columns.map((col, colIndex) => (
-                                        <td key={colIndex}>{row[col]}</td>
+
+                    <div className="split-data-tables">
+                        <div className="data-table-container">
+                            <h3>Train Data</h3>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        {columns.map((col, index) => (
+                                            <th key={index}>{col}</th>
+                                        ))}
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {trainData.map((row, rowIndex) => (
+                                        <tr key={rowIndex}>
+                                            {columns.map((col, colIndex) => (
+                                                <td key={colIndex}>{row[col]}</td>
+                                            ))}
+                                        </tr>
                                     ))}
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-    
-                    <h3>Test Data</h3>
-                    <table>
-                        <thead>
-                            <tr>
-                                {columns.map((col, index) => (
-                                    <th key={index}>{col}</th>
-                                ))}
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {testData.map((row, rowIndex) => (
-                                <tr key={rowIndex}>
-                                    {columns.map((col, colIndex) => (
-                                        <td key={colIndex}>{row[col]}</td>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div className="data-table-container">
+                            <h3>Test Data</h3>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        {columns.map((col, index) => (
+                                            <th key={index}>{col}</th>
+                                        ))}
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {testData.map((row, rowIndex) => (
+                                        <tr key={rowIndex}>
+                                            {columns.map((col, colIndex) => (
+                                                <td key={colIndex}>{row[col]}</td>
+                                            ))}
+                                        </tr>
                                     ))}
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </section>
-    
-                <section className="model-selection-section">
-                    <h2>Model Selection</h2>
-                    <label>
-                        Model Type:
-                        <select value={modelType} onChange={handleModelTypeChange}>
-                            <option value="classification">Classification</option>
-                            <option value="regression">Regression</option>
-                        </select>
-                    </label>
-                    <label>
-                        Model:
-                        <select value={selectedModel} onChange={handleModelSelection}>
-                            {(modelType === 'classification' ? classificationModels : regressionModels).map((model, index) => (
-                                <option key={index} value={model}>
-                                    {model}
-                                </option>
-                            ))}
-                        </select>
-                    </label>
-    
-                    <h3>Hyperparameters</h3>
-                    {selectedModel === 'Logistic Regression' && modelType === 'classification' && (
-                        <label>
-                            C:
-                            <input
-                                type="number"
-                                name="C"
-                                value={hyperparameters.C}
-                                onChange={handleHyperparameterChange}
-                                step="0.1"
-                            />
-                        </label>
-                    )}
-                    {selectedModel === 'Decision Trees' && modelType === 'classification' && (
-                        <label>
-                            Max Depth:
-                            <input
-                                type="number"
-                                name="maxDepth"
-                                value={hyperparameters.maxDepth}
-                                onChange={handleHyperparameterChange}
-                                step="1"
-                            />
-                        </label>
-                    )}
-                    {selectedModel === 'Random Forest' && modelType === 'classification' && (
-                        <label>
-                            n_estimators:
-                            <input
-                                type="number"
-                                name="nEstimators"
-                                value={hyperparameters.nEstimators}
-                                onChange={handleHyperparameterChange}
-                                step="10"
-                            />
-                        </label>
-                    )}
-                    {selectedModel === 'Linear Regression' && modelType === 'regression' && (
-                        <label>
-                            Alpha:
-                            <input
-                                type="number"
-                                name="alpha"
-                                value={hyperparameters.alpha}
-                                onChange={handleHyperparameterChange}
-                                step="0.1"
-                            />
-                        </label>
-                    )}
-                    <button onClick={handleTrainModel}>Train Model</button>
-                    {modelTrained && <p>MODEL TRAINED</p>}
-                </section>
-    
-                <section className="evaluation-section">
-                    <h2>Evaluate Model</h2>
-                    <button onClick={handleEvaluateModel}>Evaluate</button>
-                    {accuracy !== null && <p>Accuracy: {accuracy}</p>}
-                    {evaluationComplete !== null && evaluationComplete && <p>EVALUATION COMPLETE</p>}
-                    {evaluationComplete === false && <p>Evaluation failed. Check the console for more details.</p>}
-                </section>
-    
-                <section className="chart-section">
-                    <h2>Data Visualization</h2>
+
+                <div className="model-evaluation-container">
+  <section className="model-selection-section">
+    <h2>Model Selection</h2>
+    <label>
+      Model Type:
+      <select value={modelType} onChange={handleModelTypeChange}>
+        <option value="classification">Classification</option>
+        <option value="regression">Regression</option>
+      </select>
+    </label>
+    <label>
+      Model:
+      <select value={selectedModel} onChange={handleModelSelection}>
+        {(modelType === 'classification' ? classificationModels : regressionModels).map((model, index) => (
+          <option key={index} value={model}>
+            {model}
+          </option>
+        ))}
+      </select>
+    </label>
+
+    <h3>Hyperparameters</h3>
+    {selectedModel === 'Logistic Regression' && modelType === 'classification' && (
+      <label>
+        C:
+        <input
+          type="number"
+          name="C"
+          value={hyperparameters.C}
+          onChange={handleHyperparameterChange}
+          step="0.1"
+        />
+      </label>
+    )}
+    {selectedModel === 'Decision Trees' && modelType === 'classification' && (
+      <label>
+        Max Depth:
+        <input
+          type="number"
+          name="maxDepth"
+          value={hyperparameters.maxDepth}
+          onChange={handleHyperparameterChange}
+          step="1"
+        />
+      </label>
+    )}
+    {selectedModel === 'Random Forest' && modelType === 'classification' && (
+      <label>
+        n_estimators:
+        <input
+          type="number"
+          name="nEstimators"
+          value={hyperparameters.nEstimators}
+          onChange={handleHyperparameterChange}
+          step="10"
+        />
+      </label>
+    )}
+    {selectedModel === 'Linear Regression' && modelType === 'regression' && (
+      <label>
+        Alpha:
+        <input
+          type="number"
+          name="alpha"
+          value={hyperparameters.alpha}
+          onChange={handleHyperparameterChange}
+          step="0.1"
+        />
+      </label>
+    )}
+    <button onClick={handleTrainModel}>Train Model</button>
+    {modelTrained && <p>MODEL TRAINED</p>}
+  </section>
+
+  <section className="evaluation-section">
+    <h2>Evaluate Model</h2>
+    <button onClick={handleEvaluateModel}>Evaluate</button>
+    {accuracy !== null && <p>Accuracy: {accuracy}</p>}
+    {evaluationComplete !== null && evaluationComplete && <p>EVALUATION COMPLETE</p>}
+    {evaluationComplete === false && <p>Evaluation failed. Check the console for more details.</p>}
+  </section>
+</div>
+
+
                     <div className="chart-container">
                         <Line data={chartData} />
                     </div>
-                </section>
-    
+
                 <section className="config-section">
                     <h2>Save/Load Configuration</h2>
                     <button onClick={handleSaveConfig}>Save Configuration</button>
@@ -513,7 +518,6 @@ const handleEvaluateModel = async () => {
             </main>
         </div>
     );
-    
 }
 
 export default App;
