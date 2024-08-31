@@ -22,6 +22,11 @@ function App() {
     const [XTest, setXTest] = useState([]);
     const [yTest, setYTest] = useState([]);
     const [accuracy, setAccuracy] = useState(null);
+    const [modelType, setModelType] = useState('classification');
+    const [selectedModel, setSelectedModel] = useState('Logistic Regression');
+    const [hyperparameters, setHyperparameters] = useState({ C: 1.0, maxDepth: 5, nEstimators: 100 });
+    const classificationModels = ['Logistic Regression', 'Decision Trees', 'Random Forest', 'SVM'];
+    const regressionModels = ['Linear Regression', 'Ridge', 'Lasso'];
 
     // State for charts
     const [chartData, setChartData] = useState({
@@ -105,32 +110,72 @@ function App() {
                 data: data,
                 test_size: parseFloat(testSize)
             });
-
-            // Debugging: Check the response data structure
-            console.log("Split Data Response:", response.data);
-
-            setTrainData(response.data.train_data || []);
-            setTestData(response.data.test_data || []);
-            setXTrain(response.data.X_train || []);
-            setYTrain(response.data.y_train || []);
-            setXTest(response.data.X_test || []);
-            setYTest(response.data.y_test || []);
+        
+            if (response.data) {
+                // Convert arrays of data back into objects
+                const convertToObjects = (dataArray, columns) => dataArray.map(row => {
+                    let obj = {};
+                    columns.forEach((col, index) => obj[col] = row[index]);
+                    return obj;
+                });
+    
+                // Extract data and update state
+                setXTrain(response.data.X_train || []);
+                setYTrain(response.data.y_train || []);
+                setXTest(response.data.X_test || []);
+                setYTest(response.data.y_test || []);
+    
+                setTrainData(convertToObjects(response.data.X_train, columns).map((row, index) => ({
+                    ...row,
+                    target: response.data.y_train[index]
+                })));
+                setTestData(convertToObjects(response.data.X_test, columns).map((row, index) => ({
+                    ...row,
+                    target: response.data.y_test[index]
+                })));
+    
+                console.log("Split data:", {
+                    XTrain: response.data.X_train,
+                    yTrain: response.data.y_train,
+                    XTest: response.data.X_test,
+                    yTest: response.data.y_test
+                });
+            } else {
+                console.error("No data returned from the server.");
+            }
         } catch (error) {
             console.error("Error splitting data", error);
         }
     };
+    
+    
 
     const handleTrainModel = async () => {
+        console.log("Training data:", {
+            XTrain,
+            yTrain,
+            modelType,
+            selectedModel,
+            hyperparameters
+        });
+    
         try {
-            await axios.post('http://127.0.0.1:5000/train', {
-                X_train: XTrain,
-                y_train: yTrain
+            const response = await axios.post('http://127.0.0.1:5000/train', {
+                X_train: XTrain, // Training features
+                y_train: yTrain, // Training labels
+                modelType,       // 'classification' or 'regression'
+                selectedModel,   // Selected model name
+                hyperparameters  // Hyperparameters object
             });
-            console.log("Model trained successfully");
+            
+            console.log(response.data.message);
         } catch (error) {
-            console.error("Error training model", error);
+            console.error('Error training model:', error.response ? error.response.data : error.message);
         }
     };
+    
+      
+      
 
     const handleEvaluateModel = async () => {
         try {
@@ -165,6 +210,9 @@ function App() {
                 data: data,
                 selectedColumns: selectedColumns,
                 normalizationMethod: normalizationMethod,
+                modelType,
+                selectedModel,
+                hyperparameters
                 // Add other config details as needed
             });
             console.log("Configuration saved successfully");
@@ -172,7 +220,7 @@ function App() {
             console.error("Error saving configuration", error);
         }
     };
-    
+
     const handleLoadConfig = async () => {
         try {
             const response = await axios.get('http://127.0.0.1:5000/load_config');
@@ -181,11 +229,37 @@ function App() {
             setData(config.data);
             setSelectedColumns(config.selectedColumns);
             setNormalizationMethod(config.normalizationMethod);
+            setModelType(config.modelType);
+            setSelectedModel(config.selectedModel);
+            setHyperparameters(config.hyperparameters);
             // Handle other config details as needed
         } catch (error) {
             console.error("Error loading configuration", error);
         }
     };
+
+    // Handle model type change
+    const handleModelTypeChange = (e) => {
+        const newModelType = e.target.value;
+        setModelType(newModelType);
+        setSelectedModel(newModelType === 'classification' ? classificationModels[0] : regressionModels[0]);
+        setHyperparameters(newModelType === 'classification' ? { C: 1.0, maxDepth: 5, nEstimators: 100 } : { alpha: 1.0 });
+    };
+
+    // Handle model selection
+    const handleModelSelection = (e) => {
+        setSelectedModel(e.target.value);
+    };
+
+    // Handle hyperparameter change
+    const handleHyperparameterChange = (e) => {
+        const { name, value } = e.target;
+        setHyperparameters(prev => ({
+          ...prev,
+          [name]: isNaN(value) ? prev[name] : parseFloat(value) // Ensure value is a number
+        }));
+      };
+      
 
     return (
         <div className="App">
@@ -214,134 +288,204 @@ function App() {
                                 </label>
                             ))}
                         </div>
-                        <button onClick={handleFeatureSelection}>Apply Feature Selection</button>
-
-                        <h2>Normalization/Standardization</h2>
-                        <div className="normalization">
-                            <select value={normalizationMethod} onChange={handleNormalizationChange}>
-                                <option value="minmax">Min-Max Normalization</option>
-                                <option value="standard">Standardization</option>
-                            </select>
-                            <button onClick={handleNormalizeData}>Apply Normalization</button>
-                        </div>
-                        {error && <p className="error">{error}</p>}
+                        <button onClick={handleFeatureSelection}>Select Features</button>
                     </section>
                 )}
 
-                {data.length > 0 && (
-                    <section className="data-preview-section">
-                        <h2>Data Preview</h2>
-                        <p>Shape: {shape ? `${shape[0]} rows, ${shape[1]} columns` : ''}</p>
-                        <table>
-                            <thead>
-                                <tr>
-                                    {columns.map((col, index) => (
-                                        <th key={index}>{col}</th>
+                <section className="data-info-section">
+                    <h2>Data Information</h2>
+                    <p>{shape && `Shape: ${shape[0]} rows, ${shape[1]} columns`}</p>
+                </section>
+
+                <section className="data-preview-section">
+                    <h2>Data Preview</h2>
+                    <table>
+                        <thead>
+                            <tr>
+                                {columns.map((col, index) => (
+                                    <th key={index}>{col}</th>
+                                ))}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {data.map((row, rowIndex) => (
+                                <tr key={rowIndex}>
+                                    {columns.map((col, colIndex) => (
+                                        <td key={colIndex}>{row[col]}</td>
                                     ))}
                                 </tr>
-                            </thead>
-                            <tbody>
-                                {data.map((row, index) => (
-                                    <tr key={index}>
-                                        {columns.map((col, idx) => (
-                                            <td key={idx}>{row[col]}</td>
-                                        ))}
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </section>
-                )}
+                            ))}
+                        </tbody>
+                    </table>
+                </section>
 
-                {chartData.labels.length > 0 && (
-                    <section className="chart-section">
-                        <h2>Data Visualization</h2>
-                        <Line data={chartData} options={{ responsive: true, plugins: { legend: { position: 'top' } } }} />
-                    </section>
-                )}
-
-                {data.length > 0 && (
-                    <section className="data-splitting-section">
-                        <h2>Data Splitting</h2>
+                <section className="normalization-section">
+                    <h2>Normalization</h2>
+                    <div>
                         <label>
-                            Test Size:
+                            <input
+                                type="radio"
+                                value="minmax"
+                                checked={normalizationMethod === 'minmax'}
+                                onChange={handleNormalizationChange}
+                            />
+                            Min-Max Scaling
+                        </label>
+                        <label>
+                            <input
+                                type="radio"
+                                value="zscore"
+                                checked={normalizationMethod === 'zscore'}
+                                onChange={handleNormalizationChange}
+                            />
+                            Z-Score Normalization
+                        </label>
+                    </div>
+                    <button onClick={handleNormalizeData}>Normalize Data</button>
+                    {error && <p className="error">{error}</p>}
+                </section>
+
+                <section className="split-data-section">
+                    <h2>Split Data</h2>
+                    <label>
+                        Test Size:
+                        <input
+                            type="number"
+                            value={testSize}
+                            step="0.01"
+                            min="0"
+                            max="1"
+                            onChange={handleTestSizeChange}
+                        />
+                    </label>
+                    <button onClick={handleSplitData}>Split Data</button>
+
+                    <h3>Train Data</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                {columns.map((col, index) => (
+                                    <th key={index}>{col}</th>
+                                ))}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {trainData.map((row, rowIndex) => (
+                                <tr key={rowIndex}>
+                                    {columns.map((col, colIndex) => (
+                                        <td key={colIndex}>{row[col]}</td>
+                                    ))}
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+
+                    <h3>Test Data</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                {columns.map((col, index) => (
+                                    <th key={index}>{col}</th>
+                                ))}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {testData.map((row, rowIndex) => (
+                                <tr key={rowIndex}>
+                                    {columns.map((col, colIndex) => (
+                                        <td key={colIndex}>{row[col]}</td>
+                                    ))}
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </section>
+
+                <section className="model-selection-section">
+                    <h2>Model Selection</h2>
+                    <label>
+                        Model Type:
+                        <select value={modelType} onChange={handleModelTypeChange}>
+                            <option value="classification">Classification</option>
+                            <option value="regression">Regression</option>
+                        </select>
+                    </label>
+                    <label>
+                        Model:
+                        <select value={selectedModel} onChange={handleModelSelection}>
+                            {(modelType === 'classification' ? classificationModels : regressionModels).map((model, index) => (
+                                <option key={index} value={model}>
+                                    {model}
+                                </option>
+                            ))}
+                        </select>
+                    </label>
+
+                    <h3>Hyperparameters</h3>
+                    {selectedModel === 'Logistic Regression' && modelType === 'classification' && (
+                        <label>
+                            C:
                             <input
                                 type="number"
-                                step="0.01"
-                                min="0"
-                                max="1"
-                                value={testSize}
-                                onChange={handleTestSizeChange}
+                                name="C"
+                                value={hyperparameters.C}
+                                onChange={handleHyperparameterChange}
+                                step="0.1"
                             />
                         </label>
-                        <button onClick={handleSplitData}>Split Data</button>
+                    )}
+                    {selectedModel === 'Decision Trees' && modelType === 'classification' && (
+                        <label>
+                            Max Depth:
+                            <input
+                                type="number"
+                                name="maxDepth"
+                                value={hyperparameters.maxDepth}
+                                onChange={handleHyperparameterChange}
+                                step="1"
+                            />
+                        </label>
+                    )}
+                    {selectedModel === 'Random Forest' && modelType === 'classification' && (
+                        <label>
+                            n_estimators:
+                            <input
+                                type="number"
+                                name="nEstimators"
+                                value={hyperparameters.nEstimators}
+                                onChange={handleHyperparameterChange}
+                                step="10"
+                            />
+                        </label>
+                    )}
+                    {selectedModel === 'Linear Regression' && modelType === 'regression' && (
+                        <label>
+                            Alpha:
+                            <input
+                                type="number"
+                                name="alpha"
+                                value={hyperparameters.alpha}
+                                onChange={handleHyperparameterChange}
+                                step="0.1"
+                            />
+                        </label>
+                    )}
+                    <button onClick={handleTrainModel}>Train Model</button>
+                </section>
 
-                        {trainData.length > 0 && (
-                            <div className="train-data-preview">
-                                <h2>Training Data Preview</h2>
-                                <table>
-                                    <thead>
-                                        <tr>
-                                            {columns.map((col, index) => (
-                                                <th key={index}>{col}</th>
-                                            ))}
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {trainData.map((row, index) => (
-                                            <tr key={index}>
-                                                {columns.map((col, idx) => (
-                                                    <td key={idx}>{row[col]}</td>
-                                                ))}
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                        )}
+                <section className="evaluation-section">
+                    <h2>Evaluate Model</h2>
+                    <button onClick={handleEvaluateModel}>Evaluate</button>
+                    {accuracy !== null && <p>Accuracy: {accuracy}</p>}
+                </section>
 
-                        {testData.length > 0 && (
-                            <div className="test-data-preview">
-                                <h2>Testing Data Preview</h2>
-                                <table>
-                                    <thead>
-                                        <tr>
-                                            {columns.map((col, index) => (
-                                                <th key={index}>{col}</th>
-                                            ))}
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {testData.map((row, index) => (
-                                            <tr key={index}>
-                                                {columns.map((col, idx) => (
-                                                    <td key={idx}>{row[col]}</td>
-                                                ))}
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                        )}
-                    </section>
-                )}
-
-                {XTrain.length > 0 && (
-                    <section className="model-training-section">
-                        <h2>Model Training</h2>
-                        <button onClick={handleTrainModel}>Train Model</button>
-                    </section>
-                )}
-
-                {XTest.length > 0 && (
-                    <section className="model-evaluation-section">
-                        <h2>Model Evaluation</h2>
-                        <button onClick={handleEvaluateModel}>Evaluate Model</button>
-                        {accuracy !== null && <p>Model Accuracy: {accuracy}</p>}
-                    </section>
-                )}
+                <section className="chart-section">
+                    <h2>Data Visualization</h2>
+                    <Line data={chartData} />
+                </section>
 
                 <section className="config-section">
+                    <h2>Save/Load Configuration</h2>
                     <button onClick={handleSaveConfig}>Save Configuration</button>
                     <button onClick={handleLoadConfig}>Load Configuration</button>
                 </section>
